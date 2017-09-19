@@ -28,7 +28,7 @@
   function doSearch (needle, filter) {
     var searchHost = 'http://localhost:9200/elasticsearch_index_draco_elastic/_search';
     var body = {
-      'size': 100
+      'size': 20
     };
 
     // Check if the search string or the filter were entered.
@@ -71,11 +71,11 @@
 
     // Print results on screen.
     var output = '';
-    for (var i = 0; i < response.hits.total; i++) {
+    for (var i = 0; i < response.hits.hits.length; i++) {
       output += '<h3>' + response.hits.hits[i]._source.title + '</h3>';
       output += response.hits.hits[i]._source.summary_processed[0] + '</br>';
     }
-    document.getElementById('total').innerHTML = '<h2>Found ' + response.hits.total + ' results</h2>';
+    document.getElementById('total').innerHTML = '<h2>Showing ' + response.hits.hits.length + ' results</h2>';
     document.getElementById('hits').innerHTML = output;
   }
 
