@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search demo site</title>
+</head>
+<body>
+<h1>Elasticsearch client side demo</h1>
+<div id="search_container">
+    <label for"search">Search</label>
+    <input type="text" id="search"/>
+    <label for"type">Type</label>
+    <input type="radio" name="type" id="type" value="" checked>All
+    <input type="radio" name="type" id="type" value="article">Articles
+    <input type="radio" name="type" id="type" value="page"> Pages
+    <input type="submit" onclick="doSearch(document.getElementById('search').value, getRadioButtonValue('type'));"/>
+</div>
+<div id="total"></div>
+<div id="hits"></div>
+<script type="application/javascript">
+  /**
+   * Performs a search request against an Elasticsearch server.
+   * @param {string} needle
+   *   The string to search for.
+   * @param {string} filter
+   *   A string to use to filter by type. For example: 'article';
+   */
+  function doSearch (needle, filter) {
+    var searchHost = 'http://localhost:9200/elasticsearch_index_draco_elastic/_search';
+    var body = {
+      'size': 100
+    };
+
+    // Check if the search string or the filter were entered.
+    if ((needle.length !== 0) && ((typeof filter !== 'undefined') || (filter.length !== 0))) {
+      var query = {
+        'bool': {}
+      };
+      if (needle.length != 0) {
+        query.bool.must = {
+          'dis_max': {
+            'queries': [
+              {
+                'match': {
+                  '_all': {
+                    'query': needle,
+                    'fuzziness': 'auto'
+                  }
+                }
+              }
+            ]
+          }
+        };
+      }
+      if ((typeof filter != 'undefined') && (filter.length != 0)) {
+        query.bool.filter = {
+          'term': {
+            'type': filter
+          }
+        };
+      }
+      body.query = query;
+    }
+
+    // Perform the request.
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open('POST', searchHost, false);
+    xmlHttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    xmlHttp.send(JSON.stringify(body));
+    var response = JSON.parse(xmlHttp.responseText);
+
+    // Print results on screen.
+    var output = '';
+    for (var i = 0; i < response.hits.total; i++) {
+      output += '<h3>' + response.hits.hits[i]._source.title + '</h3>';
+      output += response.hits.hits[i]._source.summary_processed[0] + '</br>';
+    }
+    document.getElementById('total').innerHTML = '<h2>Found ' + response.hits.total + ' results</h2>';
+    document.getElementById('hits').innerHTML = output;
+  }
+
+  /**
+   * Helper function to obtain the value of a set of radio buttons.
+   *
+   * @param {string} name
+   *   The name of the radio elements.
+   * @returns {string}
+   *   The selected value or an empty string if nothing was selected.
+   */
+  function getRadioButtonValue (name) {
+    var radios = document.getElementsByName(name);
+
+    for (var i = 0, length = radios.length; i < length; i++) {
+      if (radios[i].checked) {
+        return radios[i].value;
+      }
+    }
+    return '';
+  }
+
+  doSearch('', '');
+</script>
+</body>
+</html>
