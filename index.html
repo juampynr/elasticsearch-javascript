@@ -36,23 +36,15 @@
       var query = {
         'bool': {}
       };
-      if (needle.length != 0) {
+      if (needle.length !== 0) {
         query.bool.must = {
-          'dis_max': {
-            'queries': [
-              {
-                'match': {
-                  '_all': {
-                    'query': needle,
-                    'fuzziness': 'auto'
-                  }
-                }
-              }
-            ]
+          'multi_match': {
+            'query': needle,
+            'fields': [ 'title^2', 'summary_processed' ]
           }
         };
       }
-      if ((typeof filter != 'undefined') && (filter.length != 0)) {
+      if ((typeof filter !== 'undefined') && (filter.length !== 0)) {
         query.bool.filter = {
           'term': {
             'type': filter
